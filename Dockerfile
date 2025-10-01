@@ -4,7 +4,7 @@ WORKDIR /app
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev
 
 # Build rustic with s3 feature
-RUN cargo install --locked --git https://github.com/rustic-rs/rustic --tag v0.10.0 --features s3
+RUN cargo install --locked --git https://github.com/rustic-rs/rustic --tag v0.10.0 --features opendal
 
 # Final minimal image
 FROM alpine:latest
