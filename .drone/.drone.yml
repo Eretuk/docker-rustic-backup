@@ -6,7 +6,7 @@ steps:
   - name: build and push
     image: plugins/docker
     settings:
-      repo: https://git.kolspace.cc/victor.kolomin/docker-rustic-backup
+      repo: git.kolspace.cc/victor.kolomin/docker-rustic-backup
       registry: git.kolspace.cc
       tags:
         - ${DRONE_TAG}
