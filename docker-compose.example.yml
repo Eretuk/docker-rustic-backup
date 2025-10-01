@@ -1,0 +1,56 @@
+services:
+  rustic_daemon:
+    # IMPORTANT: Replace with the name of your custom built Rustic image
+    image: your_registry/rustic-backup:latest 
+    # Use the Ansible variable for hostname
+    hostname: "{{ inventory_hostname }}"
+    container_name: rustic_backup_daemon
+    
+    # The container must run continuously for the Cron Daemon to execute scheduled jobs
+    restart: "unless-stopped" 
+    
+    environment:
+      # --- 1. CRON SCHEDULING (Daemon Manager) ---
+      # Defines WHEN the entire backup script (backup, prune, check) will run.
+      # Example: "0 0,12 * * *" runs at 00:00 and 12:00 daily (every 12 hours)
+      - CRON_SCHEDULE="0 0,12 * * *" 
+      
+      # --- 2. RUSTIC CORE SETTINGS ---
+      # Repository URL (uses your existing Restic/S3-compatible setup)
+      - RUSTIC_REPOSITORY="s3:http://192.168.110.135:9000/{{ inventory_hostname }}"
+      
+      # CRITICAL: Repository Encryption Password (REQUIRED for init/backup/check)
+      - RUSTIC_PASSWORD="YOUR_SUPER_SECRET_REPOSITORY_PASSWORD_HERE" 
+      
+      # --- 3. EXECUTOR SETTINGS (Used by backup.sh) ---
+      # Paths to backup (space-separated list). Must match the volume mount source.
+      # This corresponds to your original /mnt/volumes mount.
+      - BACKUP_PATHS="/data/volumes/" 
+
+      # Pruning policy arguments (corresponds to RESTIC_FORGET_ARGS)
+      - PRUNE_POLICY="--keep-daily 7 --keep-weekly 5 --keep-monthly 12"
+      
+      # Check arguments (corresponds to RESTIC_CHECK_ARGS)
+      - CHECK_ARGS="--read-data-subset 10%"
+      
+      # --- 4. CLOUD CREDENTIALS (S3/MinIO Example) ---
+      # If your S3/MinIO credentials are NOT in the .env file, uncomment and set them here:
+      # - AWS_ACCESS_KEY_ID=...
+      # - AWS_SECRET_ACCESS_KEY=...
+      
+    # --- 5. MOUNTED DATA ---
+    volumes:
+      # Mount the Docker data path from the host (read-only for safety)
+      # /opt/docker (Host) -> /data/volumes/ (Container)
+      - /opt/docker:/data/volumes/:ro
+      
+      # Persistent Volume for the Rustic Cache (crucial for performance)
+      - rustic_cache:/root/.cache/rustic
+      
+    # Include the .env file if it contains S3 secrets or other shared variables
+    env_file:
+      - .env
+
+volumes:
+  # Define the named volume for the persistent cache
+  rustic_cache:
