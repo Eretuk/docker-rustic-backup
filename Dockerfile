@@ -9,7 +9,7 @@ RUN apk update && \
 # Define the version of Rustic to install
 ENV RUSTIC_VERSION=v0.10.0
 # IMPORTANT: Check the latest version on the Rustic GitHub release page!
-RUN curl -L "https://github.com/rustic-rs/rustic/releases/download/v${RUSTIC_VERSION}/rustic-v${RUSTIC_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /usr/local/bin/
+RUN curl -L "https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSION}/rustic-${RUSTIC_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /usr/local/bin/
 
 # --- Setup Scripts ---
 # Copy the core backup executor script (will be called by cron)
