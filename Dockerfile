@@ -1,24 +1,21 @@
-# Dockerfile
-FROM alpine:latest
+FROM rust:1.82-alpine AS builder
 
-# Install dependencies: bash, curl, and the cron daemon (dcron)
-RUN apk update && \
-    apk add --no-cache bash curl dcron
+WORKDIR /app
+RUN apk add --no-cache musl-dev pkgconfig openssl-dev
 
-# --- Install Rustic ---
-# Define the version of Rustic to install
-ENV RUSTIC_VERSION=v0.10.0
-# IMPORTANT: Check the latest version on the Rustic GitHub release page!
-RUN curl -L "https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSION}/rustic-${RUSTIC_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /usr/local/bin/
+# Собираем rustic с поддержкой S3
+RUN cargo install --locked --git https://github.com/rustic-rs/rustic --tag v0.10.0 --features s3
 
-# --- Setup Scripts ---
-# Copy the core backup executor script (will be called by cron)
+# финальный образ
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates bash curl dcron tzdata
+
+# копируем бинарник rustic
+COPY --from=builder /usr/local/cargo/bin/rustic /usr/local/bin/rustic
+
+# скрипты
 COPY backup.sh /usr/local/bin/backup.sh
-RUN chmod +x /usr/local/bin/backup.sh
-
-# Copy the daemon startup script (launches cron and keeps container alive)
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+RUN chmod +x /usr/local/bin/backup.sh /start.sh
 
-# Set the entry point to the daemon startup script
 CMD ["/start.sh"]
