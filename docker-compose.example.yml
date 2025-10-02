@@ -10,33 +10,32 @@ services:
     restart: "unless-stopped" 
     
     environment:
-      # --- 1. CRON SCHEDULING (Daemon Manager) ---
+      # --- 1. CRON SCHEDULING ---
       # Defines WHEN the entire backup script (backup, prune, check) will run.
-      # Example: "0 0,12 * * *" runs at 00:00 and 12:00 daily (every 12 hours)
+      # Example: "0 0,12 * * *" runs at 00:00 and 12:00 daily
       - CRON_SCHEDULE="0 0,12 * * *" 
       
       # --- 2. RUSTIC CORE SETTINGS ---
-      # Repository URL (uses your existing Restic/S3-compatible setup)
-      - RUSTIC_REPOSITORY="s3:http://192.168.110.135:9000/{{ inventory_hostname }}"
-      
-      # CRITICAL: Repository Encryption Password (REQUIRED for init/backup/check)
+      # CRITICAL: Repository Encryption Password
       - RUSTIC_PASSWORD="YOUR_SUPER_SECRET_REPOSITORY_PASSWORD_HERE" 
       
-      # --- 3. EXECUTOR SETTINGS (Used by backup.sh) ---
+      # --- 3. S3 REPOSITORY CONFIGURATION ---
+      # These variables are used to generate /etc/rustic/rustic.toml and to create the bucket.
+      - S3_ENDPOINT="http://192.168.110.135:9000"
+      - S3_BUCKET="mybucket" # Example: use hostname as bucket name
+      - S3_REGION="us-east-1" # Can be any string for MinIO, but required by the S3 spec
+      - AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY"
+      - AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
+
+      # --- 4. EXECUTOR SETTINGS (Used by backup.sh) ---
       # Paths to backup (space-separated list). Must match the volume mount source.
-      # This corresponds to your original /mnt/volumes mount.
       - BACKUP_PATHS="/data/volumes/" 
 
-      # Pruning policy arguments (corresponds to RESTIC_FORGET_ARGS)
+      # Pruning policy arguments
       - PRUNE_POLICY="--keep-daily 7 --keep-weekly 5 --keep-monthly 12"
       
-      # Check arguments (corresponds to RESTIC_CHECK_ARGS)
+      # Check arguments
       - CHECK_ARGS="--read-data-subset 10%"
-      
-      # --- 4. CLOUD CREDENTIALS (S3/MinIO Example) ---
-      # If your S3/MinIO credentials are NOT in the .env file, uncomment and set them here:
-      # - AWS_ACCESS_KEY_ID=...
-      # - AWS_SECRET_ACCESS_KEY=...
       
     # --- 5. MOUNTED DATA ---
     volumes:
@@ -48,6 +47,7 @@ services:
       - rustic_cache:/root/.cache/rustic
       
     # Include the .env file if it contains S3 secrets or other shared variables
+    # Note: Variables in this file will be overridden by the 'environment' section above.
     env_file:
       - .env
 

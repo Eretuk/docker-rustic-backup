@@ -57,6 +57,6 @@ rustic prune --forget ${PRUNE_POLICY}
 # Note: Check is kept for completeness, but can be disabled or scheduled separately
 # to reduce daily resource usage.
 echo "$(date): --> Running integrity check (check)..."
-rustic check
+rustic check ${CHECK_ARGS}
 
 echo "$(date): --- ALL BACKUP TASKS COMPLETED SUCCESSFULLY. ---"

@@ -4,27 +4,65 @@
 # Exit immediately if any command fails
 set -e
 
-# --- 1. Validate Schedule Variable ---
-# Ensure the required CRON_SCHEDULE variable is set by the user
+# --- 1. Validate Core Variables ---
 if [ -z "$CRON_SCHEDULE" ]; then
     echo "ERROR: CRON_SCHEDULE environment variable is not set."
-    echo "Please set it (e.g., '0 3 * * *' for 3 AM daily)."
     exit 1
 fi
 
-# --- 2. Create Dynamic Crontab ---
-# Create the crontab file based on the user-defined schedule.
-# The job calls the backup executor script. Logs are redirected to cron.log.
+if [ -z "$RUSTIC_PASSWORD" ]; then
+    echo "ERROR: RUSTIC_PASSWORD environment variable is not set."
+    exit 1
+fi
+
+# --- 2. S3 Configuration & Bucket Check ---
+# Check for S3 variables. If they exist, configure rustic and check the bucket.
+if [ -n "$S3_ENDPOINT" ] && [ -n "$S3_BUCKET" ] && [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+    echo "S3 environment variables detected. Configuring rustic and checking bucket..."
+
+    # Set a default region if not provided
+    S3_REGION=${S3_REGION:-"us-east-1"}
+
+    # --- Create rustic config file ---
+    mkdir -p /etc/rustic
+    cat <<EOF > /etc/rustic/rustic.toml
+[repository]
+repository = "opendal:s3"
+password = "${RUSTIC_PASSWORD}"
+
+[repository.options]
+endpoint = "${S3_ENDPOINT}"
+bucket = "${S3_BUCKET}"
+region = "${S3_REGION}"
+access_key_id = "${AWS_ACCESS_KEY_ID}"
+secret_access_key = "${AWS_SECRET_ACCESS_KEY}"
+EOF
+    echo "Rustic config created at /etc/rustic/rustic.toml"
+
+    # --- Check and Create S3 Bucket ---
+    echo "Configuring MinIO client for endpoint: ${S3_ENDPOINT}"
+    mc alias set s3_storage "${S3_ENDPOINT}" "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}" --api S3v4
+
+    if mc ls "s3_storage/${S3_BUCKET}" > /dev/null 2>&1; then
+        echo "Bucket '${S3_BUCKET}' already exists."
+    else
+        echo "Bucket '${S3_BUCKET}' not found. Creating it..."
+        mc mb "s3_storage/${S3_BUCKET}"
+        echo "Bucket '${S3_BUCKET}' created successfully."
+    fi
+else
+    echo "WARNING: S3 environment variables (S3_ENDPOINT, S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) are not fully set."
+    echo "Skipping S3 configuration and bucket creation. Rustic might fail if not configured otherwise."
+fi
+
+
+# --- 3. Create Dynamic Crontab ---
 CRONTAB_FILE="/var/spool/cron/crontabs/root"
 echo "Creating crontab entry: ${CRON_SCHEDULE} /usr/local/bin/backup.sh"
-
-# Note: The absolute path to the script is required by cron.
 echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh" > ${CRONTAB_FILE}
-
-# Ensure the crontab file has the correct permissions (not strictly needed for root, but good practice)
 chmod 600 ${CRONTAB_FILE}
 
-# --- 3. Start Daemon ---
+# --- 4. Start Daemon ---
 echo "Starting cron daemon in foreground..."
 exec /usr/sbin/cron -f -L 8
 echo "Cron daemon is running. Container is now in daemon mode."

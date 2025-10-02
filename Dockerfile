@@ -25,6 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cron bash curl tzdata ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# Install MinIO Client (mc) for S3 bucket management
+RUN curl -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc && \
+    chmod +x /usr/local/bin/mc
+
 COPY --from=builder /usr/local/cargo/bin/rustic /usr/local/bin/rustic
 
 COPY backup.sh /usr/local/bin/backup.sh
