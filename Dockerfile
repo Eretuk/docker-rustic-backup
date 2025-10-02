@@ -18,6 +18,11 @@ RUN curl -L https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSI
     \
     chmod +x /usr/local/bin/rustic /usr/local/bin/mc
 
+# --- Configure the shell to auto-source the sanitized environment ---
+# This makes interactive sessions (`docker exec -it ... bash`) work correctly out-of-the-box.
+RUN echo '\n# Source sanitized environment variables if available' >> /root/.bashrc && \
+    echo 'if [ -f /etc/profile.d/00-rustic-env.sh ]; then . /etc/profile.d/00-rustic-env.sh; fi' >> /root/.bashrc
+
 COPY backup.sh /usr/local/bin/backup.sh
 COPY restore.sh /usr/local/bin/restore.sh
 COPY start.sh /start.sh
