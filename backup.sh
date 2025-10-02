@@ -18,17 +18,11 @@ fi
 # ----------------------------------------------------
 # 1. VALIDATION (Ensure Executor Variables Are Set)
 # ----------------------------------------------------
-
 # Validate required variables (though RUSTIC_REPOSITORY/PASSWORD are implicitly checked by Rustic)
 if [ -z "$BACKUP_PATHS" ]; then
     echo "ERROR: BACKUP_PATHS environment variable is not set. Exiting executor."
     exit 1
 fi
-
-# Sanitize policy variables to prevent issues with quotes from .env files
-BACKUP_PATHS=${BACKUP_PATHS//\"/}
-PRUNE_POLICY=${PRUNE_POLICY//\"/}
-CHECK_ARGS=${CHECK_ARGS//\"/}
 
 # PRUNE_POLICY is optional, default if not set
 PRUNE_POLICY=${PRUNE_POLICY:-"--keep-daily 7 --keep-weekly 4 --keep-monthly 12"}

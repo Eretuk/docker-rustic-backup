@@ -4,28 +4,37 @@
 # Exit immediately if any command fails
 set -e
 
-# --- 0. Determine Container Role ---
+# --- 0. Sanitize ALL Environment Variables ---
+# Remove quotes that might come from .env files to prevent issues.
+# These sanitized variables will be inherited by all child processes (cron, backup.sh).
+CONTAINER_ROLE=${CONTAINER_ROLE//\"/}
+RUSTIC_PASSWORD=${RUSTIC_PASSWORD//\"/}
+CRON_SCHEDULE=${CRON_SCHEDULE//\"/}
+S3_ENDPOINT=${S3_ENDPOINT//\"/}
+S3_BUCKET=${S3_BUCKET//\"/}
+S3_REGION=${S3_REGION//\"/}
+AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID//\"/}
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY//\"/}
+RANDOM_DELAY_SECONDS=${RANDOM_DELAY_SECONDS//\"/}
+BACKUP_PATHS=${BACKUP_PATHS//\"/}
+PRUNE_POLICY=${PRUNE_POLICY//\"/}
+CHECK_ARGS=${CHECK_ARGS//\"/}
+
+# --- 1. Determine Container Role ---
 # Default to "backup" role if not specified
 CONTAINER_ROLE=${CONTAINER_ROLE:-"backup"}
-# Sanitize role variable to prevent issues with quotes from .env files
-CONTAINER_ROLE=${CONTAINER_ROLE//\"/}
 
-# --- 1. Validate Core Variables ---
+# --- 2. Validate Core Variables ---
 if [ -z "$RUSTIC_PASSWORD" ]; then
     echo "ERROR: RUSTIC_PASSWORD environment variable is not set."
     exit 1
 fi
 
-# --- 2. S3 Configuration & Bucket Check ---
+# --- 3. S3 Configuration & Bucket Check ---
 # Check for S3 variables. If they exist, configure rustic and check the bucket.
 if [ -n "$S3_ENDPOINT" ] && [ -n "$S3_BUCKET" ] && [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "S3 environment variables detected. Configuring rustic and checking bucket..."
 
-    # Sanitize S3 variables by removing quotes that might come from docker-compose/.env files
-    S3_ENDPOINT=${S3_ENDPOINT//\"/}
-    S3_BUCKET=${S3_BUCKET//\"/}
-    AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID//\"/}
-    AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY//\"/}
     # Set a default region if not provided
     S3_REGION=${S3_REGION:-"us-east-1"}
 
@@ -62,7 +71,7 @@ else
 fi
 
 
-# --- 3. Role-based Execution ---
+# --- 4. Role-based Execution ---
 if [ "$CONTAINER_ROLE" = "backup" ]; then
     echo "--- Starting in Backup Mode ---"
     if [ -z "$CRON_SCHEDULE" ]; then
