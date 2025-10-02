@@ -1,17 +1,33 @@
-FROM rust:alpine AS builder
+# Stage 1: build
+FROM rust:1.82-bookworm AS builder
 
 WORKDIR /app
-RUN apk add --no-cache musl-dev pkgconfig openssl-dev
 
-# Build rustic with s3 feature
+# Установим зависимости для сборки
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    libssl-dev \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Сборка rustic с backend opendal
 RUN cargo install --locked \
     --git https://github.com/rustic-rs/rustic \
     --tag v0.10.0 \
     --features rustic_backend/opendal
 
-# Final minimal image
-FROM alpine:3.20
-RUN apk add --no-cache ca-certificates bash curl dcron tzdata
+# Stage 2: runtime
+FROM debian:bookworm-slim
+
+# Установим только минимальный набор пакетов для запуска
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    bash \
+    curl \
+    cron \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/cargo/bin/rustic /usr/local/bin/rustic
 
