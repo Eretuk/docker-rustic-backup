@@ -11,11 +11,6 @@ CONTAINER_ROLE=${CONTAINER_ROLE:-"backup"}
 CONTAINER_ROLE=${CONTAINER_ROLE//\"/}
 
 # --- 1. Validate Core Variables ---
-if [ -z "$CRON_SCHEDULE" ]; then
-    echo "ERROR: CRON_SCHEDULE environment variable is not set."
-    exit 1
-fi
-
 if [ -z "$RUSTIC_PASSWORD" ]; then
     echo "ERROR: RUSTIC_PASSWORD environment variable is not set."
     exit 1
