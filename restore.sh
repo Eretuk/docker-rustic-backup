@@ -14,7 +14,7 @@ echo "Fetching available snapshots..."
 # --- 2. Display Snapshots ---
 if [ -n "$HOST_FILTER" ]; then
     echo "Displaying snapshots for host: ${HOST_FILTER}"
-    rustic snapshots --host "${HOST_FILTER}"
+    rustic snapshots --filter-host "${HOST_FILTER}"
 else
     echo "Displaying all snapshots..."
     rustic snapshots
