@@ -19,23 +19,12 @@ CRONTAB_FILE="/var/spool/cron/crontabs/root"
 echo "Creating crontab entry: ${CRON_SCHEDULE} /usr/local/bin/backup.sh"
 
 # Note: The absolute path to the script is required by cron.
-echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh >> /var/log/cron.log 2>&1" > ${CRONTAB_FILE}
+echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh" > ${CRONTAB_FILE}
 
 # Ensure the crontab file has the correct permissions (not strictly needed for root, but good practice)
 chmod 600 ${CRONTAB_FILE}
 
 # --- 3. Start Daemon ---
-echo "Starting cron daemon (crond -l 8)..."
-# Start crond with a log level of 8 (verbose)
-/usr/sbin/crond -l 8
-
+echo "Starting cron daemon in foreground..."
+exec /usr/sbin/cron -f -L 8
 echo "Cron daemon is running. Container is now in daemon mode."
-
-# --- 4. Keep Container Running ---
-# The container must not exit, so we run a never-ending loop (the main process).
-# This keeps the container alive so crond can execute its tasks.
-while true
-do
-  # Sleep for a long time (1 hour)
-  sleep 3600
-done

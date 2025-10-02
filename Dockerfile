@@ -3,7 +3,7 @@ FROM rust:bookworm AS builder
 
 WORKDIR /app
 
-# Установим зависимости для сборки
+# Setup necessary dependencies for building rustic with opendal backend
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
@@ -20,14 +20,10 @@ RUN cargo install --locked \
 # Stage 2: runtime
 FROM debian:bookworm-slim
 
-# Установим только минимальный набор пакетов для запуска
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    bash \
-    curl \
-    cron \
-    tzdata \
-    && rm -rf /var/lib/apt/lists/*
+    cron bash curl tzdata ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/cargo/bin/rustic /usr/local/bin/rustic
 
