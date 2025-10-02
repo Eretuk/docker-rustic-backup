@@ -24,6 +24,8 @@ if [ -n "$S3_ENDPOINT" ] && [ -n "$S3_BUCKET" ] && [ -n "$AWS_ACCESS_KEY_ID" ] &
     # Sanitize S3 variables by removing quotes that might come from docker-compose/.env files
     S3_ENDPOINT=${S3_ENDPOINT//\"/}
     S3_BUCKET=${S3_BUCKET//\"/}
+    AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID//\"/}
+    AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY//\"/}
     # Set a default region if not provided
     S3_REGION=${S3_REGION:-"us-east-1"}
 
