@@ -7,6 +7,8 @@ set -e
 # --- 0. Determine Container Role ---
 # Default to "backup" role if not specified
 CONTAINER_ROLE=${CONTAINER_ROLE:-"backup"}
+# Sanitize role variable to prevent issues with quotes from .env files
+CONTAINER_ROLE=${CONTAINER_ROLE//\"/}
 
 # --- 1. Validate Core Variables ---
 if [ -z "$CRON_SCHEDULE" ]; then
