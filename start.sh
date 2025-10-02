@@ -20,6 +20,9 @@ fi
 if [ -n "$S3_ENDPOINT" ] && [ -n "$S3_BUCKET" ] && [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "S3 environment variables detected. Configuring rustic and checking bucket..."
 
+    # Sanitize S3 variables by removing quotes that might come from docker-compose/.env files
+    S3_ENDPOINT=${S3_ENDPOINT//\"/}
+    S3_BUCKET=${S3_BUCKET//\"/}
     # Set a default region if not provided
     S3_REGION=${S3_REGION:-"us-east-1"}
 
