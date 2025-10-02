@@ -2,7 +2,7 @@
 # backup.sh: The pure executor script called by cron.
 
 # Exit immediately if a command exits with a non-zero status.
-set -e 
+set -e
 
 # ----------------------------------------------------
 # 1. VALIDATION (Ensure Executor Variables Are Set)
@@ -14,6 +14,11 @@ if [ -z "$BACKUP_PATHS" ]; then
     exit 1
 fi
 
+# Sanitize policy variables to prevent issues with quotes from .env files
+BACKUP_PATHS=${BACKUP_PATHS//\"/}
+PRUNE_POLICY=${PRUNE_POLICY//\"/}
+CHECK_ARGS=${CHECK_ARGS//\"/}
+
 # PRUNE_POLICY is optional, default if not set
 PRUNE_POLICY=${PRUNE_POLICY:-"--keep-daily 7 --keep-weekly 4 --keep-monthly 12"}
 
@@ -21,16 +26,26 @@ PRUNE_POLICY=${PRUNE_POLICY:-"--keep-daily 7 --keep-weekly 4 --keep-monthly 12"}
 # 2. INITIALIZATION (Check and Initialize Repository)
 # ----------------------------------------------------
 
-echo "$(date): --> Checking repository availability..."
-# Check for repository errors. If an error is found, initialize it.
-if rustic check --json 2>&1 | grep -q 'error'; then
-    echo "$(date): Repository not found or seems damaged. Attempting to initialize..."
+echo "$(date): --> Checking if repository is initialized..."
+# A more reliable way to check for an initialized repo is to try reading its config.
+# If this command fails, the repository does not exist yet and must be initialized.
+if ! rustic cat config > /dev/null 2>&1; then
+    echo "$(date): Repository not initialized. Attempting to initialize..."
     rustic init
 fi
 
 # ----------------------------------------------------
 # 3. RUN THE BACKUP (Backup)
 # ----------------------------------------------------
+
+# Validate that backup paths exist before running the backup
+for path in $BACKUP_PATHS; do
+    if [ ! -e "$path" ]; then
+        echo "$(date): !!! ERROR: Backup source path does not exist: $path !!!"
+        echo "$(date): Please check your volume mounts and the BACKUP_PATHS variable."
+        exit 1
+    fi
+done
 
 echo "$(date): --> Starting backup process for paths: ${BACKUP_PATHS}"
 rustic backup ${BACKUP_PATHS}
@@ -44,11 +59,14 @@ fi
 echo "$(date): Backup successfully completed."
 
 # ----------------------------------------------------
-# 4. CLEANUP OLD SNAPSHOTS (Prune/Forget)
+# 4. CLEANUP OLD SNAPSHOTS (Forget & Prune)
 # ----------------------------------------------------
 
-echo "$(date): --> Starting cleanup (prune/forget) with policy: ${PRUNE_POLICY}"
-rustic prune --forget ${PRUNE_POLICY}
+echo "$(date): --> Applying retention policy (forget) with policy: ${PRUNE_POLICY}"
+rustic forget ${PRUNE_POLICY}
+
+echo "$(date): --> Pruning unreferenced data from repository..."
+rustic prune
 
 # ----------------------------------------------------
 # 5. VERIFY INTEGRITY (Check)
