@@ -1,7 +1,7 @@
 services:
   rustic_daemon:
     # IMPORTANT: Replace with the name of your custom built Rustic image
-    image: your_registry/rustic-backup:latest 
+    image: git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
     # Use the Ansible variable for hostname
     hostname: "{{ inventory_hostname }}"
     container_name: rustic_backup_daemon
@@ -10,9 +10,13 @@ services:
     restart: "unless-stopped" 
     
     environment:
-      # --- 1. CRON SCHEDULING ---
+      # --- 0. CONTAINER ROLE ---
+      # "backup": Runs the cron daemon for scheduled backups (default)
+      # "restore": Keeps the container alive to perform manual restores
+      - CONTAINER_ROLE="backup"
+
+      # --- 1. CRON SCHEDULING (for backup role) ---
       # Defines WHEN the entire backup script (backup, prune, check) will run.
-      # Example: "0 0,12 * * *" runs at 00:00 and 12:00 daily
       - CRON_SCHEDULE="0 */12 * * *" 
       
       # --- 2. RUSTIC CORE SETTINGS ---
@@ -27,32 +31,57 @@ services:
       - AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY"
       - AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
 
-      # --- 4. EXECUTOR SETTINGS (Used by backup.sh) ---
+      # --- 4. EXECUTOR SETTINGS (for backup role) ---
       # Optional: Max random delay in seconds to wait before starting the backup.
-      # This helps distribute the load if many containers start at the same time.
-      # Example: 3600 will make the script wait 0-59 minutes before running.
       - RANDOM_DELAY_SECONDS=3600
 
       # Paths to backup (space-separated list). Must match the volume mount source.
       - BACKUP_PATHS="/data/volumes/" 
 
       # Pruning policy arguments
-      - PRUNE_POLICY="--keep-daily 7 --keep-weekly 5 --keep-monthly 12"
+      - PRUNE_POLICY="--keep-last 3 --keep-daily 7 --keep-weekly 4 --keep-monthly 6"
       
       # Check arguments
-      - CHECK_ARGS="--read-data-subset 10%"
+      - CHECK_ARGS="--read-data --read-data-subset 10%"
       
     # --- 5. MOUNTED DATA ---
     volumes:
       # Mount the Docker data path from the host (read-only for safety)
-      # /opt/docker (Host) -> /data/volumes/ (Container)
       - /opt/docker:/data/volumes/:ro
       
       # Persistent Volume for the Rustic Cache (crucial for performance)
       - rustic_cache:/root/.cache/rustic
       
     # Include the .env file if it contains S3 secrets or other shared variables
-    # Note: Variables in this file will be overridden by the 'environment' section above.
+    env_file:
+      - .env
+
+  rustic_restore:
+    # This is a dedicated service for running the container in restore mode.
+    image: git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
+    hostname: rustic-restore-shell
+    container_name: rustic_restore_shell
+    # No restart policy, as this is a manual, one-off task.
+    
+    environment:
+      # --- 0. CONTAINER ROLE ---
+      - CONTAINER_ROLE="restore"
+
+      # --- RUSTIC & S3 SETTINGS (must match the backup container) ---
+      - RUSTIC_PASSWORD="YOUR_SUPER_SECRET_REPOSITORY_PASSWORD_HERE" 
+      - S3_ENDPOINT="http://192.168.110.135:9000"
+      - S3_BUCKET="mybucket"
+      - S3_REGION="us-east-1"
+      - AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY"
+      - AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
+      
+    volumes:
+      # Mount a local directory on the host to receive the restored files.
+      - ./restore_output:/restore
+      
+      # Mount the same cache volume for performance
+      - rustic_cache:/root/.cache/rustic
+
     env_file:
       - .env
 

@@ -32,7 +32,8 @@ RUN curl -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc
 COPY --from=builder /usr/local/cargo/bin/rustic /usr/local/bin/rustic
 
 COPY backup.sh /usr/local/bin/backup.sh
+COPY restore.sh /usr/local/bin/restore.sh
 COPY start.sh /start.sh
-RUN chmod +x /usr/local/bin/backup.sh /start.sh
+RUN chmod +x /usr/local/bin/backup.sh /usr/local/bin/restore.sh /start.sh
 
 CMD ["/start.sh"]

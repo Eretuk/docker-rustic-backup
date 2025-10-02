@@ -4,6 +4,10 @@
 # Exit immediately if any command fails
 set -e
 
+# --- 0. Determine Container Role ---
+# Default to "backup" role if not specified
+CONTAINER_ROLE=${CONTAINER_ROLE:-"backup"}
+
 # --- 1. Validate Core Variables ---
 if [ -z "$CRON_SCHEDULE" ]; then
     echo "ERROR: CRON_SCHEDULE environment variable is not set."
@@ -59,13 +63,33 @@ else
 fi
 
 
-# --- 3. Create Dynamic Crontab ---
-CRONTAB_FILE="/var/spool/cron/crontabs/root"
-echo "Creating crontab entry: ${CRON_SCHEDULE} /usr/local/bin/backup.sh"
-echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh" > ${CRONTAB_FILE}
-chmod 600 ${CRONTAB_FILE}
+# --- 3. Role-based Execution ---
+if [ "$CONTAINER_ROLE" = "backup" ]; then
+    echo "--- Starting in Backup Mode ---"
+    if [ -z "$CRON_SCHEDULE" ]; then
+        echo "ERROR: CRON_SCHEDULE environment variable is not set for backup mode."
+        exit 1
+    fi
+    # Create Dynamic Crontab
+    CRONTAB_FILE="/var/spool/cron/crontabs/root"
+    echo "Creating crontab entry: ${CRON_SCHEDULE} /usr/local/bin/backup.sh"
+    echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh" > ${CRONTAB_FILE}
+    chmod 600 ${CRONTAB_FILE}
 
-# --- 4. Start Daemon ---
-echo "Starting cron daemon in foreground..."
-exec /usr/sbin/cron -f -L 8
-echo "Cron daemon is running. Container is now in daemon mode."
+    # Start Cron Daemon
+    echo "Starting cron daemon in foreground..."
+    exec /usr/sbin/cron -f -L 8
+
+elif [ "$CONTAINER_ROLE" = "restore" ]; then
+    echo "--- Starting in Restore Mode ---"
+    echo "The container is now running and ready for restore operations."
+    echo "To restore a backup, run the following command:"
+    echo "  docker exec -it ${HOSTNAME} /usr/local/bin/restore.sh"
+    echo "--------------------------------------------------------"
+    # Keep container alive
+    exec tail -f /dev/null
+
+else
+    echo "ERROR: Invalid CONTAINER_ROLE specified: '${CONTAINER_ROLE}'. Use 'backup' or 'restore'."
+    exit 1
+fi
