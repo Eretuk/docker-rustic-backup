@@ -17,7 +17,11 @@ steps:
         from_secret: registry_user
       password:
         from_secret: registry_pass
-        
+      buildkit: true
+      cache_from:
+        - git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
+      cache_to:
+        - type=inline
 trigger:
   event:
     - tag
