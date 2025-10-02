@@ -13,7 +13,7 @@ services:
       # --- 1. CRON SCHEDULING ---
       # Defines WHEN the entire backup script (backup, prune, check) will run.
       # Example: "0 0,12 * * *" runs at 00:00 and 12:00 daily
-      - CRON_SCHEDULE="0 0,12 * * *" 
+      - CRON_SCHEDULE="0 */12 * * *" 
       
       # --- 2. RUSTIC CORE SETTINGS ---
       # CRITICAL: Repository Encryption Password
@@ -28,6 +28,11 @@ services:
       - AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
 
       # --- 4. EXECUTOR SETTINGS (Used by backup.sh) ---
+      # Optional: Max random delay in seconds to wait before starting the backup.
+      # This helps distribute the load if many containers start at the same time.
+      # Example: 3600 will make the script wait 0-59 minutes before running.
+      - RANDOM_DELAY_SECONDS=3600
+
       # Paths to backup (space-separated list). Must match the volume mount source.
       - BACKUP_PATHS="/data/volumes/" 
 

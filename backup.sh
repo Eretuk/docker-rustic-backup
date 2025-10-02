@@ -4,6 +4,17 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+# --- Optional Random Delay ---
+# If RANDOM_DELAY_SECONDS is set, sleep for a random duration up to its value
+# to prevent a "thundering herd" of backups from multiple hosts.
+if [ -n "$RANDOM_DELAY_SECONDS" ] && [ "$RANDOM_DELAY_SECONDS" -gt 0 ]; then
+    # Sanitize the variable to ensure it's a number
+    DELAY=${RANDOM_DELAY_SECONDS//\"/}
+    SLEEP_TIME=$((RANDOM % DELAY))
+    echo "$(date): Starting random delay of ${SLEEP_TIME}s (max ${DELAY}s)..."
+    sleep ${SLEEP_TIME}
+fi
+
 # ----------------------------------------------------
 # 1. VALIDATION (Ensure Executor Variables Are Set)
 # ----------------------------------------------------
