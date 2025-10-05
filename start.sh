@@ -44,6 +44,11 @@ done
 chmod +x "${ENV_SCRIPT}"
 echo "Environment sanitized and persisted."
 
+# --- Persist environment for Cron ---
+# Save the sanitized environment to a file that the cron daemon will read.
+printenv > /etc/environment
+echo "Environment saved for cron."
+
 # --- 1. Determine Container Role ---
 # Default to "backup" role if not specified
 CONTAINER_ROLE=${CONTAINER_ROLE:-"backup"}
@@ -104,8 +109,8 @@ if [ "$CONTAINER_ROLE" = "backup" ]; then
     fi
     # Create Dynamic Crontab
     CRONTAB_FILE="/var/spool/cron/crontabs/root"
-    echo "Creating crontab entry: ${CRON_SCHEDULE} /usr/local/bin/backup.sh"
-    echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh" > ${CRONTAB_FILE}
+    echo "Creating crontab entry: ${CRON_SCHEDULE} /usr/local/bin/backup.sh > /proc/1/fd/1 2>&1"
+    echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh > /proc/1/fd/1 2>&1" > ${CRONTAB_FILE}
     chmod 600 ${CRONTAB_FILE}
 
     # Start Cron Daemon
