@@ -109,8 +109,11 @@ if [ "$CONTAINER_ROLE" = "backup" ]; then
     fi
     # Create Dynamic Crontab
     CRONTAB_FILE="/var/spool/cron/crontabs/root"
-    echo "Creating crontab entry: ${CRON_SCHEDULE} /usr/local/bin/backup.sh > /proc/1/fd/1 2>&1"
-    echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh > /proc/1/fd/1 2>&1" > ${CRONTAB_FILE}
+    echo "Creating crontab with full PATH..."
+    # Define the PATH for the cron environment to ensure all binaries are found.
+    echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" > "${CRONTAB_FILE}"
+    # Add the cron job, redirecting all output to the container's stdout/stderr
+    echo "${CRON_SCHEDULE} /usr/local/bin/backup.sh > /proc/1/fd/1 2>&1" >> "${CRONTAB_FILE}"
     chmod 600 ${CRONTAB_FILE}
 
     # Start Cron Daemon
