@@ -4,6 +4,27 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+# --- Notification & Error Handling ---
+# Generic function to send a notification to the webhook URL.
+# It accepts two arguments: status ("success" or "failure") and a message.
+send_notification() {
+    local status=$1
+    local message=$2
+
+    if [ -n "$N8N_WEBHOOK_URL" ]; then
+        echo "$(date): --> Sending ${status} notification to n8n..."
+        # Send a POST request with a dynamic JSON payload
+        curl -X POST \
+             -H "Content-Type: application/json" \
+             -d "{\"hostname\": \"${HOSTNAME}\", \"status\": \"${status}\", \"message\": \"${message}\"}" \
+             "${N8N_WEBHOOK_URL}" \
+             --silent --output /dev/null || echo "$(date): WARNING: Failed to send notification to n8n."
+    fi
+}
+
+# Set the trap: if any command fails (ERR), call the notification function with a failure status.
+trap 'send_notification "failure" "Backup script failed at line $LINENO. Check container logs for details."' ERR
+
 # --- Optional Random Delay ---
 # If RANDOM_DELAY_SECONDS is set, sleep for a random duration up to its value
 # to prevent a "thundering herd" of backups from multiple hosts.
@@ -83,3 +104,9 @@ echo "$(date): --> Running integrity check (check)..."
 rustic check ${CHECK_ARGS}
 
 echo "$(date): --- ALL BACKUP TASKS COMPLETED SUCCESSFULLY. ---"
+
+# ----------------------------------------------------
+# 6. SEND SUCCESS NOTIFICATION
+# ----------------------------------------------------
+# The trap above handles failures, so if we reach this point, the backup was successful.
+send_notification "success" "Rustic backup completed successfully."

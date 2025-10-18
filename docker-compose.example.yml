@@ -35,6 +35,9 @@ services:
       # Optional: Max random delay in seconds to wait before starting the backup.
       - RANDOM_DELAY_SECONDS=3600
 
+      # Optional: Webhook URL for n8n to send notifications (for success and failure).
+      - N8N_WEBHOOK_URL="http://your-n8n-instance/webhook/your-id"
+
       # Paths to backup (space-separated list). Must match the volume mount source.
       - BACKUP_PATHS="/data/volumes/" 
 
