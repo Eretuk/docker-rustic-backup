@@ -2,7 +2,7 @@
 FROM debian:bookworm-slim
 
 # Define the version of Rustic to install as a build argument
-ARG RUSTIC_VERSION=v0.10.0
+ARG RUSTIC_VERSION=v0.10.2
 
 # Set DEBIAN_FRONTEND to noninteractive to suppress warnings
 ENV DEBIAN_FRONTEND=noninteractive
