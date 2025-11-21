@@ -85,23 +85,26 @@ fi
 echo "$(date): Backup successfully completed."
 
 # ----------------------------------------------------
-# 4. CLEANUP OLD SNAPSHOTS (Forget & Prune)
+# 4. CLEANUP OLD SNAPSHOTS (Forget & Prune) - RUN CONDITIONALLY
 # ----------------------------------------------------
+if [[ "${RUN_MAINTENANCE}" == "true" ]]; then
+    echo "$(date): --> RUN_MAINTENANCE is true. Running repository maintenance..."
 
-echo "$(date): --> Applying retention policy (forget) with policy: ${PRUNE_POLICY}"
-rustic forget ${PRUNE_POLICY}
+    echo "$(date): --> Applying retention policy (forget) with policy: ${PRUNE_POLICY}"
+    rustic forget ${PRUNE_POLICY}
 
-echo "$(date): --> Pruning unreferenced data from repository..."
-rustic prune
+    echo "$(date): --> Pruning unreferenced data from repository..."
+    rustic prune
 
-# ----------------------------------------------------
-# 5. VERIFY INTEGRITY (Check)
-# ----------------------------------------------------
+    # ----------------------------------------------------
+    # 5. VERIFY INTEGRITY (Check) - RUN AFTER MAINTENANCE
+    # ----------------------------------------------------
+    echo "$(date): --> Running integrity check (check)..."
+    rustic check ${CHECK_ARGS}
 
-# Note: Check is kept for completeness, but can be disabled or scheduled separately
-# to reduce daily resource usage.
-echo "$(date): --> Running integrity check (check)..."
-rustic check ${CHECK_ARGS}
+else
+    echo "$(date): --> RUN_MAINTENANCE is not 'true'. Skipping repository maintenance (forget, prune, check)."
+fi
 
 echo "$(date): --- ALL BACKUP TASKS COMPLETED SUCCESSFULLY. ---"
 

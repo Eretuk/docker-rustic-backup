@@ -46,6 +46,8 @@ services:
       
       # Check arguments
       - CHECK_ARGS="--read-data --read-data-subset 10%"
+
+      # - RUN_MAINTENANCE="false" # POssible not to run maintenance tasks like repacking and checking repository integrity.
       
     # --- 5. MOUNTED DATA ---
     volumes:
