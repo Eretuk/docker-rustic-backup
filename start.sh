@@ -26,7 +26,6 @@ VARS_TO_SANITIZE=(
     "BACKUP_PATHS"
     "PRUNE_POLICY"
     "CHECK_ARGS"
-    "RUN_MAINTENANCE"
 )
 
 for VAR_NAME in "${VARS_TO_SANITIZE[@]}"; do
@@ -119,6 +118,19 @@ if [ "$CONTAINER_ROLE" = "backup" ]; then
     chmod 600 ${CRONTAB_FILE}
 
     # Start Cron Daemon
+    echo "Starting cron daemon in foreground..."
+    exec /usr/sbin/cron -f -L 8
+
+elif [ "$CONTAINER_ROLE" = "prune" ]; then
+    echo "--- Starting in Prune (maintenance) Mode ---"
+    if [ -z "$CRON_SCHEDULE" ]; then
+        echo "ERROR: CRON_SCHEDULE environment variable is not set for prune mode."
+        exit 1
+    fi
+    CRONTAB_FILE="/var/spool/cron/crontabs/root"
+    echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" > "${CRONTAB_FILE}"
+    echo "${CRON_SCHEDULE} /usr/local/bin/prune.sh > /proc/1/fd/1 2>&1" >> "${CRONTAB_FILE}"
+    chmod 600 ${CRONTAB_FILE}
     echo "Starting cron daemon in foreground..."
     exec /usr/sbin/cron -f -L 8
 

@@ -40,15 +40,7 @@ services:
 
       # Paths to backup (space-separated list). Must match the volume mount source.
       - BACKUP_PATHS="/data/volumes/" 
-
-      # Pruning policy arguments
-      - PRUNE_POLICY="--keep-last 3 --keep-daily 7 --keep-weekly 4 --keep-monthly 6"
-      
-      # Check arguments
-      - CHECK_ARGS="--read-data --read-data-subset 10%"
-
-      # - RUN_MAINTENANCE="false" # POssible not to run maintenance tasks like repacking and checking repository integrity.
-      
+     
     # --- 5. MOUNTED DATA ---
     volumes:
       # Mount the Docker data path from the host (read-only for safety)
@@ -87,6 +79,30 @@ services:
       # Mount the same cache volume for performance
       - rustic_cache:/root/.cache/rustic
 
+    env_file:
+      - .env
+
+  rustic_pruner:
+    image: git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
+    hostname: rustic-pruner
+    container_name: rustic_pruner_daemon
+    restart: "unless-stopped"
+    environment:
+      - CONTAINER_ROLE="prune"
+      # Schedule maintenance at 03:00 daily by default
+      - CRON_SCHEDULE="0 3 * * *"
+      - RUSTIC_PASSWORD="YOUR_SUPER_SECRET_REPOSITORY_PASSWORD_HERE"
+      - S3_ENDPOINT="http://192.168.110.135:9000"
+      - S3_BUCKET="mybucket"
+      - S3_REGION="us-east-1"
+      - AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY"
+      - AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
+      - RANDOM_DELAY_SECONDS=0
+      - PRUNE_POLICY="--keep-last 3 --keep-daily 7 --keep-weekly 4 --keep-monthly 6"
+      - CHECK_ARGS="--read-data --read-data-subset 10%"
+      - N8N_WEBHOOK_URL="http://your-n8n-instance/webhook/your-id"
+    volumes:
+      - rustic_cache:/root/.cache/rustic
     env_file:
       - .env
 

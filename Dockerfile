@@ -27,6 +27,7 @@ RUN echo '\n# Source sanitized environment variables if available' >> /root/.bas
 COPY backup.sh /usr/local/bin/backup.sh
 COPY restore.sh /usr/local/bin/restore.sh
 COPY start.sh /start.sh
-RUN chmod +x /usr/local/bin/backup.sh /usr/local/bin/restore.sh /start.sh
+COPY prune.sh /usr/local/bin/prune.sh
+RUN chmod +x /usr/local/bin/backup.sh /usr/local/bin/restore.sh /start.sh /usr/local/bin/prune.sh
 
 CMD ["/start.sh"]

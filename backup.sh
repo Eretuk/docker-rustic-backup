@@ -44,10 +44,6 @@ if [ -z "$BACKUP_PATHS" ]; then
     echo "ERROR: BACKUP_PATHS environment variable is not set. Exiting executor."
     exit 1
 fi
-
-# PRUNE_POLICY is optional, default if not set
-PRUNE_POLICY=${PRUNE_POLICY:-"--keep-daily 7 --keep-weekly 4 --keep-monthly 12"}
-
 # ----------------------------------------------------
 # 2. INITIALIZATION (Check and Initialize Repository)
 # ----------------------------------------------------
@@ -79,37 +75,13 @@ STATUS=$?
 
 if [ $STATUS -ne 0 ]; then
     echo "$(date): !!! BACKUP FAILED (exit code $STATUS) !!!"
-    # Optional: Add external notification logic here
     exit 1
 fi
 echo "$(date): Backup successfully completed."
-
-# ----------------------------------------------------
-# 4. CLEANUP OLD SNAPSHOTS (Forget & Prune) - RUN CONDITIONALLY
-# ----------------------------------------------------
-if [[ "${RUN_MAINTENANCE}" == "true" ]]; then
-    echo "$(date): --> RUN_MAINTENANCE is true. Running repository maintenance..."
-
-    echo "$(date): --> Applying retention policy (forget) with policy: ${PRUNE_POLICY}"
-    rustic forget ${PRUNE_POLICY}
-
-    echo "$(date): --> Pruning unreferenced data from repository..."
-    rustic prune
-
-    # ----------------------------------------------------
-    # 5. VERIFY INTEGRITY (Check) - RUN AFTER MAINTENANCE
-    # ----------------------------------------------------
-    echo "$(date): --> Running integrity check (check)..."
-    rustic check ${CHECK_ARGS}
-
-else
-    echo "$(date): --> RUN_MAINTENANCE is not 'true'. Skipping repository maintenance (forget, prune, check)."
-fi
-
 echo "$(date): --- ALL BACKUP TASKS COMPLETED SUCCESSFULLY. ---"
 
 # ----------------------------------------------------
-# 6. SEND SUCCESS NOTIFICATION
+# 4. SEND SUCCESS NOTIFICATION
 # ----------------------------------------------------
 # The trap above handles failures, so if we reach this point, the backup was successful.
 send_notification "success" "Rustic backup completed successfully."
