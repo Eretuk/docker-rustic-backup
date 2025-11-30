@@ -10,7 +10,7 @@ steps:
       password:
         from_secret: gitea_registry_pass
       tags:
-        - ${WOODPECKER_COMMIT_TAG}
+        - ${CI_COMMIT_TAG}
         - latest
       cache_from:
         - git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
