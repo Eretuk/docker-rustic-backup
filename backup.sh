@@ -78,6 +78,13 @@ if [ $STATUS -ne 0 ]; then
     exit 1
 fi
 echo "$(date): Backup successfully completed."
+
+# --- Optional Cache Cleanup ---
+if [ -n "$CACHE_CLEANUP_DAYS" ] && [ "$CACHE_CLEANUP_DAYS" -gt 0 ]; then
+    echo "$(date): --> Running cache cleanup..."
+    /usr/local/bin/cache-cleanup.sh
+fi
+
 echo "$(date): --- ALL BACKUP TASKS COMPLETED SUCCESSFULLY. ---"
 
 # ----------------------------------------------------

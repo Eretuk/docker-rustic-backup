@@ -35,6 +35,11 @@ services:
       # Optional: Max random delay in seconds to wait before starting the backup.
       - RANDOM_DELAY_SECONDS=3600
 
+      # Optional: Cache cleanup configuration (days to keep cache files).
+      # Files not accessed for longer than this period will be deleted.
+      # Set to 0 or leave empty to disable cache cleanup.
+      - CACHE_CLEANUP_DAYS=7
+
       # Optional: Webhook URL for n8n to send notifications (for success and failure).
       - N8N_WEBHOOK_URL="http://your-n8n-instance/webhook/your-id"
 

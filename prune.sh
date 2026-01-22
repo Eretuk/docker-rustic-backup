@@ -42,5 +42,11 @@ rustic prune
 echo "$(date): --> Running integrity check (check)..."
 rustic check ${CHECK_ARGS}
 
+# --- Optional Cache Cleanup ---
+if [ -n "$CACHE_CLEANUP_DAYS" ] && [ "$CACHE_CLEANUP_DAYS" -gt 0 ]; then
+    echo "$(date): --> Running cache cleanup..."
+    /usr/local/bin/cache-cleanup.sh
+fi
+
 echo "$(date): --- MAINTENANCE COMPLETED SUCCESSFULLY. ---"
 send_notification "success" "Rustic maintenance (forget/prune/check) completed successfully."
