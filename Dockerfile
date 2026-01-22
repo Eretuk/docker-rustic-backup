@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cron bash curl tzdata ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSION}/rustic-${RUSTIC_VERSION}-aarch64-unknown-linux-musl.tar.gz \
+RUN curl -L https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSION}/rustic-${RUSTIC_VERSION}-x86_64-unknown-linux-musl.tar.gz \
 # RUN curl -L https://github.com/rustic-rs/rustic/releases/download/v0.10.2/rustic-v0.10.2-1-g189b17c-x86_64-unknown-linux-musl.tar.gz \
     | tar -xvzf - -C /usr/local/bin rustic && \
     \
