@@ -15,7 +15,7 @@ RUN curl -L https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSI
 # RUN curl -L https://github.com/rustic-rs/rustic/releases/download/v0.10.2/rustic-v0.10.2-1-g189b17c-x86_64-unknown-linux-musl.tar.gz \
     | tar -xvzf - -C /usr/local/bin rustic && \
     \
-    curl -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc && \
+    curl -L -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc && \
     \
     chmod +x /usr/local/bin/rustic /usr/local/bin/mc
 
