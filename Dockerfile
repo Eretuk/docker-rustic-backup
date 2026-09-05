@@ -11,12 +11,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cron bash curl tzdata ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSION}/rustic-${RUSTIC_VERSION}-x86_64-unknown-linux-musl.tar.gz \
-# RUN curl -L https://github.com/rustic-rs/rustic/releases/download/v0.10.2/rustic-v0.10.2-1-g189b17c-x86_64-unknown-linux-musl.tar.gz \
-    | tar -xvzf - -C /usr/local/bin rustic && \
-    \
-    curl -L -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc && \
-    \
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "$ARCH" in \
+        x86_64)  RUSTIC_ARCH="x86_64-unknown-linux-musl"; MC_ARCH="linux-amd64" ;; \
+        aarch64) RUSTIC_ARCH="aarch64-unknown-linux-musl"; MC_ARCH="linux-arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac; \
+    curl -L "https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSION}/rustic-${RUSTIC_VERSION}-${RUSTIC_ARCH}.tar.gz" \
+        | tar -xvzf - -C /usr/local/bin rustic && \
+    curl -L -o /usr/local/bin/mc "https://dl.min.io/client/mc/release/${MC_ARCH}/mc" && \
     chmod +x /usr/local/bin/rustic /usr/local/bin/mc
 
 # --- Configure the shell to auto-source the sanitized environment ---

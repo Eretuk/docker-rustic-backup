@@ -4,7 +4,7 @@ steps:
     settings:
       repo: git.kolspace.cc/victor.kolomin/docker-rustic-backup
       registry: git.kolspace.cc
-      platforms: linux/amd64
+      platforms: linux/amd64,linux/arm64
       username:
         from_secret: gitea_registry_user
       password:
