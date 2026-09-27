@@ -20,7 +20,7 @@ RUN set -eux; \
     esac; \
     curl -L "https://github.com/rustic-rs/rustic/releases/download/${RUSTIC_VERSION}/rustic-${RUSTIC_VERSION}-${RUSTIC_ARCH}.tar.gz" \
         | tar -xvzf - -C /usr/local/bin rustic && \
-    curl -L -o /usr/local/bin/mc "https://dl.min.io/client/mc/release/${MC_ARCH}/mc" && \
+    curl -L -o /usr/local/bin/mc "https://dl.min.io/aistor/mc/release/${MC_ARCH}/mc" && \
     chmod +x /usr/local/bin/rustic /usr/local/bin/mc
 
 # --- Configure the shell to auto-source the sanitized environment ---
