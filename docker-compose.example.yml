@@ -1,7 +1,7 @@
 services:
   rustic_daemon:
     # IMPORTANT: Replace with the name of your custom built Rustic image
-    image: git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
+    image: ghcr.io/eretuk/docker-rustic-backup:latest
     # Use the Ansible variable for hostname
     hostname: "{{ inventory_hostname }}"
     container_name: rustic_backup_daemon
@@ -60,7 +60,7 @@ services:
 
   rustic_restore:
     # This is a dedicated service for running the container in restore mode.
-    image: git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
+    image: ghcr.io/eretuk/docker-rustic-backup:latest
     hostname: rustic-restore-shell
     container_name: rustic_restore_shell
     # No restart policy, as this is a manual, one-off task.
@@ -88,7 +88,7 @@ services:
       - .env
 
   rustic_pruner:
-    image: git.kolspace.cc/victor.kolomin/docker-rustic-backup:latest
+    image: ghcr.io/eretuk/docker-rustic-backup:latest
     hostname: rustic-pruner
     container_name: rustic_pruner_daemon
     restart: "unless-stopped"
